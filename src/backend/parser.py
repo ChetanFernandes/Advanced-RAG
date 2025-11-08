@@ -2,6 +2,7 @@ from langchain.agents import AgentOutputParser
 from langchain.schema import AgentAction, AgentFinish
 import re
 
+
 class StrictOutputParser(AgentOutputParser):
     """Parses LLM output strictly according to your system prompt format:
     Thought -> Action/Action Input OR Final Answer

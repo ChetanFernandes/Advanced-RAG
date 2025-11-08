@@ -1,4 +1,4 @@
--e d:\gen ai\gen_ai_masters_bappy\langchain\advanced_prod_rag
+-e git+https://github.com/ChetanFernandes/Advanced-RAG.git@9ae82ee332ac7776714cf149953b9c052cfca897#egg=Agentic_Advanced_RAG_chat_bot
 aiofiles==25.1.0
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.2

@@ -2,8 +2,8 @@ import os
 import base64
 from pathlib import Path
 from langchain_core.documents import Document
-import logging as log
-import re
+from src.logger_config import log
+
 
 
 def encode_image(image_path):
@@ -68,10 +68,11 @@ def extract_text_elements(raw_pdf_elements):
     category_counts = {}
     for element in raw_pdf_elements:
          category = str(type(element))
-    if category in category_counts:
-        category_counts[category] += 1
-    else:
-        category_counts[category] = 1
+         log.info(f"Category -> {category}")
+         if category in category_counts:
+            category_counts[category] += 1
+         else:
+            category_counts[category] = 1
 
     # Unique_categories will have unique elements
     unique_categories = set(category_counts.keys())

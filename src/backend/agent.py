@@ -4,8 +4,8 @@ import os
 from langchain.tools import Tool
 from dotenv import load_dotenv
 from langchain.agents import initialize_agent, AgentType
-from agentic_rag.backend.parser import StrictOutputParser
-from agentic_rag.logger_config import log
+from backend.parser import StrictOutputParser
+from src.logger_config import log
 
 class web_agent:
     def __init__(self,llm):
@@ -59,23 +59,25 @@ class web_agent:
     
 
     def initializing_agent(self):
-        tools = self.initilze_tool()
-        agent = initialize_agent(
-                tools = tools,
-                llm = self.llm,
-                agent = AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION, # A type of agent that follows the ReAct (Reason + Act) pattern. It looks at the tool descriptions and decides, without prior training, which one to use.
-                memory = self.memory,
-                verbose = True,
-                handle_parsing_errors = True, 
-                agent_executor_kwargs={
-                    "prefix": self.system_prompt,  # Regular string
-                    "suffix": self.SUFFIX,         # Regular string
-                    "max_iterations": 5,
-                    "output_parser": StrictOutputParser()
-    }
-    )
-        return agent
-    
+        try:
+            tools = self.initilze_tool()
+            agent = initialize_agent(
+                    tools = tools,
+                    llm = self.llm,
+                    agent = AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION, # A type of agent that follows the ReAct (Reason + Act) pattern. It looks at the tool descriptions and decides, without prior training, which one to use.
+                    memory = self.memory,
+                    verbose = True,
+                    handle_parsing_errors = True, 
+                    agent_executor_kwargs={
+                        "prefix": self.system_prompt,  # Regular string
+                        "suffix": self.SUFFIX,         # Regular string
+                        "max_iterations": 5,
+                        "output_parser": StrictOutputParser()})
+        
+            return agent
+        except Exception:
+            log.exception("Agent Initilization failed")
+
     async def query_answering_async(self,agent,query,retrived_results):
         try:
             final_response = await agent.ainvoke({"input": f"User Question: {query} \n Retrieved Info: {retrived_results}"})

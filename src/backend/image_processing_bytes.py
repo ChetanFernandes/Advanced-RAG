@@ -3,7 +3,7 @@ from PIL import Image
 import os, io, base64
 from langchain_community.chat_models import ChatOllama
 import asyncio
-from agentic_rag.logger_config import log
+from src.logger_config import log
 
 
 def encode_image_with_mime(image_bytes,content_type,resize_to):

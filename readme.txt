@@ -1,5 +1,5 @@
-streamlit run src\agentic_rag\frontend\app.py
-python -m uvicorn src.agentic_rag.backend.main:app --host 0.0.0.0 --port 8000 --reload
+streamlit run "src\frontend\app.py"
+python -m uvicorn src.backend.main:app --host 0.0.0.0 --port 8000 --reload
 Explanation:
 
 python -m uvicorn → launch uvicorn through python

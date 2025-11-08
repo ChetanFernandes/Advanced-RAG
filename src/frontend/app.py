@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 import time
-import logging as log
+from logger_config import logging as log
 
 API_URL = "http://localhost:8000"
 
