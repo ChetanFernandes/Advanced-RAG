@@ -2,10 +2,10 @@
 __pycache__/
 *.py[codz]
 *$py.class
-
+.streamlit/secrets.toml
 # C extensions
 *.so
-test/
+test.ipynb
 all_images/
 # Distribution / packaging
 .Python
@@ -26,6 +26,9 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+=1.3.2
+main_1.py
+app_1.py
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

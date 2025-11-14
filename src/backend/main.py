@@ -1,8 +1,9 @@
 # FastAPI is built on top of asyncio, a Python library that supports asynchronous programming — 
 # meaning tasks can run without blocking each other.
 
-from fastapi import FastAPI, Query, UploadFile, File, Form 
+from fastapi import FastAPI, Query, UploadFile, File, Form, Request, Header
 from fastapi.middleware.cors import CORSMiddleware 
+from starlette.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from backend.DB import ConnectToAstraDB
 from backend.agent import web_agent
@@ -16,16 +17,44 @@ from backend.chunking_retrieveing import question_answering
 from fastapi.responses import JSONResponse
 from src.logger_config import log
 from astrapy import DataAPIClient
+from dotenv import load_dotenv
+from fastapi.responses import RedirectResponse
+from authlib.integrations.starlette_client import OAuth
+import jwt
+from datetime import datetime, timedelta, timezone
+from fastapi.responses import HTMLResponse
+from fastapi import Header, HTTPException, Depends
+from starlette.middleware.sessions import SessionMiddleware
 
-app = FastAPI()
+load_dotenv()
 
-app.add_middleware(CORSMiddleware,
-                   allow_origins = ["*"],
-                   allow_credentials = True,
-                   allow_methods = ["*"],
-                   allow_headers = ["*"],
-                   )
+JWT_SECRET = os.getenv("JWT_SECRET", "supersecretjwt")
+JWT_ALGO = "HS256"
 
+def create_jwt(user_info: dict):  # creates a JWT (signed token) containing user info
+    payload = {
+        "user": user_info,
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
+
+def verify_jwt(request: Request):
+    auth = request.headers.get("authorization")
+    log.info(f"auth header -> {auth}")
+    if auth is None or not auth.startswith("Bearer "):
+        raise HTTPException(401, "Missing or invalid authorization header")
+    
+    token = auth.split(" ")[1]
+
+    try:
+        decoded = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGO])
+        log.info(f"Decoded token information {decoded}")
+        return decoded["user"]  # return user info
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(401, "Token expired")
+    except Exception:
+        raise HTTPException(401, "Invalid token")
+
+# CREATE FASTAPI APP (ONCE)
 
 @asynccontextmanager # Tells - “Hey, when the app starts, run this function once before handling any user requests.”
 async def lifespan(app: FastAPI):
@@ -41,8 +70,8 @@ async def lifespan(app: FastAPI):
         #app.state.llm = ChatOllama(model="qwen2.5vl:3b")
         app.state.llm = EuriLLM()
         app.state.web_search_agent = web_agent(app.state.llm)
-        app.state.agent = await asyncio.to_thread(app.state.web_search_agent.initializing_agent)
-        app.state.memory =  app.state.web_search_agent.memory
+        #app.state.agent = await asyncio.to_thread(app.state.web_search_agent.initializing_agent)
+        #app.state.memory =  app.state.web_search_agent.memory
 
 
 
@@ -59,20 +88,113 @@ async def lifespan(app: FastAPI):
     except Exception:
          log.exception("App Intilization failed")
 
+app = FastAPI(lifespan=lifespan) # router is the internal object FastAPI uses to manage all endpoints (routes).
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SECRET_KEY", "supersecret"),
+)
+
+origins = [
+    "http://localhost:8501",   # Streamlit frontend
+    "http://localhost:8000",   # FastAPI backend (optional)
+    "http://127.0.0.1:8501",   # Streamlit (alternative localhost)
+    "http://127.0.0.1:8000", 
+    "http://localhost:8501/oauth2callback",
+     "http://localhost:8000/auth/callback" # FastAPI (alternative localhost)
+]
+
+# Cross-Origin Resource Sharing.
+app.add_middleware(CORSMiddleware,
+                   allow_origins = origins, # “Any website is allowed to talk to my API.”
+                   allow_credentials = True, 
+                   allow_methods = ["*"], # “Streamlit can call GET, POST, DELETE, PUT — any HTTP method.”
+                   allow_headers = ["*"],# “Requests are allowed to send custom headers.”
+                   )
+
+
+oauth = OAuth()
+oauth.register(
+    name="google",
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
+)
+
+@app.get("/login")
+async def login(request: Request):
+    """Redirect user to Google OAuth2 consent screen"""
+    try:
+        log.info("Inside login function")
+        redirect_uri = request.url_for("auth_callback")
+        log.info(f"redirect_uri - {redirect_uri}")
+        return await oauth.google.authorize_redirect(request, redirect_uri)
+    except Exception:
+        log.exception("Login failed")
     
 
+@app.get("/auth/callback")
+async def auth_callback(request: Request):
+    """Google redirects here after login"""
+    try:
+        token = await oauth.google.authorize_access_token(request)
+        user_info = token.get("userinfo")
+        log.info(f"redirect_uri - {user_info}")
 
-app = FastAPI(lifespan=lifespan)
-# router is the internal object FastAPI uses to manage all endpoints (routes).
+        if not user_info:
+            return JSONResponse({"error": "Login failed"}, status_code=400)
+        
+        # Create JWT
+        jwt_token = create_jwt(dict(user_info))
+        log.info(f"jwt_token {jwt_token}")
 
-@app.get("/ping")
-async def ping():
-    return {"message": "pong"}
+        # Auto-submit POST form to Streamlit
+        html = f"""
+        <html>
+        <body onload="document.forms[0].submit()">
+            <form method="GET" action="http://localhost:8501/auth_callback">
+                <input type="hidden" name="token" value="{jwt_token}">
+            </form>
+            Redirecting...
+        </body>
+        </html>
+        """
+        return HTMLResponse(html)
+    except Exception:
+        log.exception("Login failed")
+
+@app.post("/logout")
+async def logout(user: dict = Depends(verify_jwt)):
+    """Logout and clear session"""
+    try:
+        log.info('Entering log out session')
+        user_id = user['sub']
+        if user_id in app.state.user_collections:
+            log.info(f"Pre-logout: {app.state.user_collections[user_id]}")
+        # Clean only agent+memory (not vector DB)
+            if "agent" in app.state.user_collections[user_id]:
+                del app.state.user_collections[user_id]["agent"]
+            if "memory" in app.state.user_collections[user_id]:
+                del app.state.user_collections[user_id]["memory"]
+            log.info(f"Post-logout: {app.state.user_collections[user_id]}")
+            return JSONResponse(
+                                content={"message": "Successfully logged out"},
+                                status_code=200)
+        else:
+            raise HTTPException(401, "Please login again.")
+    except Exception:
+        log.exception("Log out failed")
+        raise HTTPException(401, "Please login again.")
 
 
 @app.post("/upload_file")
-async def upload_file(file: UploadFile = File(...), user_id: str = Query(...)):
+async def upload_file(user: dict = Depends(verify_jwt), file: UploadFile = File(...)):
     try:
+        log.info(f"Decoded user {user}")
+        if not user:
+            return RedirectResponse(url="/login")
+        user_id = user["sub"]  # Google unique ID
         log.info(f"user_id - {user_id}")
         collection_name = f"{user_id}_collection"
         astra_index = await asyncio.to_thread(app.state.ASTRA_DB.add_index, collection_name)
@@ -119,29 +241,36 @@ async def upload_file(file: UploadFile = File(...), user_id: str = Query(...)):
 
 
 @app.get("/available_sources")
-async def available_sources(user_id : str = Query(...)):
+async def available_sources(user: dict = Depends(verify_jwt)):
+        if not user:
+            return RedirectResponse(url="/login")
+        user_id = user["sub"]  # Google unique ID
+        log.info(f"Authenticated user: {user['email']} ({user_id})")
         try:
-            log.info("Entering available sources function")
+            log.info(app.state.user_collections.keys())
+            keys = app.state.user_collections.keys()
+
+            if not keys:
+                log.warning(f"No vector_store found for user_id={user_id}")
+                return JSONResponse(
+                            content={"sources": [], "message": "No collection found for user {user_id}"},
+                            status_code=404)
+
+
+            '''
+            vector_store = app.state.user_collections[user_id].get("vector_store") if app.state.user_collections[user_id] else []
             if not hasattr(app.state, "user_collections") or user_id not in app.state.user_collections:
                 log.warning(f"No collection found for user_id={user_id}")
                 return JSONResponse(
                     content={"sources": [], "message": f"No collection found for user {user_id}"},
                     status_code=404
             )
-
-            vector_store = app.state.user_collections[user_id].get("vector_store")
-
-            if not vector_store:
-                log.warning(f"No vector_store found for user_id={user_id}")
-                return JSONResponse(
-                        content={"sources": [], "message": "Vector store not initialized"},
-                        status_code=404
-            )
-
+            '''
+            vector_store = app.state.user_collections[user_id].get("vector_store")  
             all_docs = await vector_store.asimilarity_search("", k=1000)
             app.state.available_doc_names = list({doc.metadata.get("source") for doc in all_docs if doc.metadata.get("source")})
             log.info(f"available_doc_names -> {app.state.available_doc_names}")
-            return JSONResponse(content={"sources": app.state.available_doc_names},status_code = 200)
+            return JSONResponse(content={"sources": app.state.available_doc_names,"user_d" :user_id},status_code = 200)
         
         except Exception:
             log.exception("Failed to get available resources")
@@ -153,10 +282,17 @@ async def available_sources(user_id : str = Query(...)):
  
 
 @app.post("/query")
-async def query_endpoint(query:str = Form(...), selected_doc:str = Form(None), image:  UploadFile = File(None), user_id: str = Query(...)):
+async def query_endpoint(query:str = Form(...), selected_doc:str = Form(None), image:  UploadFile = File(None), user=Depends(verify_jwt)):
+    if not user:
+        return RedirectResponse("/login")
+    user_id = user['sub']
     try:
         log.info(f"user_id - {user_id}")
         image_summary = ""
+        log.info(f"Creating new agent & memory for user: {user_id}")
+        agent, memory = app.state.web_search_agent.initializing_agent()
+        app.state.user_collections[user_id] = {"agent": agent,"memory": memory}
+
         if not selected_doc:
             log.info("Document not selected. Pass query directly to agent on hitting submit button")
             if image:
@@ -171,14 +307,15 @@ async def query_endpoint(query:str = Form(...), selected_doc:str = Form(None), i
                      image_summary = "\n".join(image_summary) if isinstance(image_summary, list) else str(image_summary)
         
             log.info("Passing text query and image summary to agent for final results")
-            final_response = await app.state.web_search_agent.query_answering_async(app.state.agent,query,image_summary)
-            final_response = final_response.get("output", final_response)
-            log.info(f"Final Answer\n, {final_response}")
-            return JSONResponse(content={"result": f"{final_response}"}, status_code=200)     
-        
+            final_response = await app.state.web_search_agent.query_answering_async(agent,query,image_summary,memory)
+            #final_response = final_response.get("output", final_response)
+            #log.info(f"Final Answer\n, {final_response}")
+            #return JSONResponse(content={"result": f"{final_response}"}, status_code=200)     
         else:
+            log.info(f"pre query {app.state.user_collections}")
             vector_store = app.state.user_collections[user_id].get("vector_store")
             vector_retriever = app.state.user_collections[user_id].get("vector_retriever")
+            log.info(f"VS -> {vector_store}")
 
             log.info("Initilazing question ansering class")
             answer = question_answering(app.state.llm,vector_store,vector_retriever,selected_doc)
@@ -187,38 +324,73 @@ async def query_endpoint(query:str = Form(...), selected_doc:str = Form(None), i
             results,text_query  = await answer.extract_question_from_given_input(query,image)
 
             log.info("Passing retrived results and query to agent for final results")
-            final_response = await app.state.web_search_agent.query_answering_async(app.state.agent,text_query,results)
-            final_response = final_response.get("output", final_response)
-            log.info(f"Final Answer\n, {final_response}")
+            final_response = await app.state.web_search_agent.query_answering_async(agent,text_query,results,memory)
 
-            log.info("\n[DEBUG] Memory so far:")
-            for idx, msg in enumerate(app.state.memory.chat_memory.messages, 1):
-                sender = "USER" if msg.type == "human" else "ASSISTANT"
-                log.info(f"{idx}. [{sender}]: {msg.content}")
-            return JSONResponse(content={"result": f"{final_response}"}, status_code=200)    
+        final_response = final_response.get("output", final_response)
+        log.info(f"Final Answer\n, {final_response}")
+
+        log.info(f"\n[DEBUG] Memory for user {user_id}:")
+        log.info(f"User_memeory -> {memory}")
+        for idx, msg in enumerate(memory.chat_memory.messages, 1):
+            sender = "USER" if msg.type == "human" else "ASSISTANT"
+            log.info(f"{idx}. [{sender}]: {msg.content}")
+        return JSONResponse(content={"result": f"{final_response}"}, status_code=200)    
 
     except Exception:
             log.exception("Failed to answer question")
             return JSONResponse(content={"status": f"Failed to answer question (Internal_error)"},status_code=500)
     
-
-
      
 @app.delete("/delete_collection")
 async def delete_user_data(user_id: str = Query(...)):
     try:
-         log.info("Inside deletion function")
-         log.info(f"pre Deletion {app.state.user_collections}")
-         vector_store = app.state.user_collections[user_id].get("vector_store")
-         collection_name = app.state.user_collections[user_id].get("collection_name")
-         await vector_store.adelete_collection()
-         del app.state.user_collections[user_id]
-         log.info(f"Post Deletion {app.state.user_collections}")
-         return JSONResponse(content={"message": f"Collection {collection_name} deleted Successfully"},status_code=200)
-    except Exception:
-         log.exception("Collection not deleted")
-         return JSONResponse(content={"message": "Failed to delete collection"},status_code=500)
+        log.info("Inside deletion function")
+        log.info(f"Pre-deletion: {app.state.user_collections}")
+        if user_id not in app.state.user_collections:
+            return JSONResponse(
+                content={"message": "No collection exists for user"},
+                status_code=404
+            )
         
+        user_data = app.state.user_collections[user_id]
+         # Delete vector store if exists
+        vector_store = user_data.get("vector_store")
+        if vector_store:
+            await vector_store.adelete_collection()
+
+        collection_name = user_data.get("collection_name")
+
+        del app.state.user_collections[user_id]
+        log.info(f"Post deletion: {app.state.user_collections}")
+        return JSONResponse(
+            content={"message": f"Collection {collection_name} deleted successfully"},
+            status_code=200,
+        )
+    except Exception:
+        log.exception("Collection deletion failed")
+        return JSONResponse(
+            content={"message": "Failed to delete collection"},
+            status_code=500
+        )
+  
+         
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
 ''' 
 log.info("\n[DEBUG] Memory so far:")
 for idx, msg in enumerate(app.state.memory.chat_memory.messages, 1):

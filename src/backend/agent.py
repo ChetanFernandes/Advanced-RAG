@@ -12,7 +12,6 @@ class web_agent:
         load_dotenv()
         self.SERPER_API_KEY = os.getenv("SERPER_API_KEY")
         self.search = GoogleSerperAPIWrapper(serper_api_key = self.SERPER_API_KEY)
-        self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
         self.llm = llm
         self.system_prompt = """
             You are an intelligent assistant that must follow a strict reasoning format.
@@ -47,6 +46,13 @@ class web_agent:
                 Question: {input}
                 Thought:{agent_scratchpad} 
                 Remember: Only produce Final Answer when ready, following the exact format."""
+        
+    def create_new_memory(self):
+        """
+        Creates and returns a new ConversationBufferMemory instance.
+        This is used when a new user starts chatting, to ensure per-user isolation.
+        """
+        return ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
     def serper_tool(self,query: str) -> str:
         """Your task is to search the information from web for qiven query and share the observation to agent"""
@@ -61,11 +67,14 @@ class web_agent:
     def initializing_agent(self):
         try:
             tools = self.initilze_tool()
+
+            memory = self.create_new_memory()
+
             agent = initialize_agent(
                     tools = tools,
                     llm = self.llm,
                     agent = AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION, # A type of agent that follows the ReAct (Reason + Act) pattern. It looks at the tool descriptions and decides, without prior training, which one to use.
-                    memory = self.memory,
+                    memory = memory,
                     verbose = True,
                     handle_parsing_errors = True, 
                     agent_executor_kwargs={
@@ -74,21 +83,56 @@ class web_agent:
                         "max_iterations": 5,
                         "output_parser": StrictOutputParser()})
         
-            return agent
+            return agent, memory
         except Exception:
             log.exception("Agent Initilization failed")
 
-    async def query_answering_async(self,agent,query,retrived_results):
+
+    def _format_chat_history(self, messages):
+        """
+        Convert chat history into a readable plain-text transcript.
+        """
+        formatted = []
+        for msg in messages:
+            role = "User" if msg.type == "human" else "Assistant"
+            formatted.append(f"{role}: {msg.content}")
+        return "\n".join(formatted[-5:])
+
+    async def query_answering_async(self,agent,query,retrived_results,memory):
+        """
+            Executes a query against the given agent, using user-specific memory.
+            Automatically passes chat history and updates memory with new turns.
+        """
         try:
-            final_response = await agent.ainvoke({"input": f"User Question: {query} \n Retrieved Info: {retrived_results}"})
+            chat_history = memory.chat_memory.messages  # LangChain format: list[HumanMessage, AIMessage]
+            log.info(f"Chat history length: {len(chat_history)}")
+
+             # Construct a clean and context-rich input for the agent
+            inputs = {
+            "input": (
+                f"User Question: {query}\n\n"
+                f"Retrieved Info: {retrived_results}\n\n"
+                f"Previous Conversation Context:\n"
+                f"{self._format_chat_history(chat_history)}"
+                 )
+                }
+
+            final_response = await agent.ainvoke(inputs)
+            memory.chat_memory.add_user_message(query)
+            memory.chat_memory.add_ai_message(final_response.get("output", str(final_response)))
+
         except Exception:
             log.exception("iteration limit reached, summarize last observation")
-            history = self.memory.load_memory_variables({}).get("chat_history", [])
+            history = memory.load_memory_variables({}).get("chat_history", [])
             last_obs = history[-1].content if history else "No observation found."
+
             summary = await self.llm.ainvoke(
                 f"Summarize this observation into a concise Final Answer:\n{last_obs}"
             )
             final_response = {"output": summary}
+
+            # Optional: store summary back to memory
+            memory.chat_memory.add_ai_message(summary)
         return final_response
     
 

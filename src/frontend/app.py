@@ -1,51 +1,109 @@
 import streamlit as st
 import requests
 import time
-from logger_config import logging as log
-import uuid
-from streamlit_cookies_controller import CookieController
-import datetime
+from logger_config import log
+import jwt
+
+import os
+
+
 API_URL = "http://localhost:8000"
+JWT_SECRET = st.secrets["auth"]["JWT_SECRET"]
+JWT_ALGO = "HS256"
 
-# Try to get 'uid' from the URL
-query_uid = st.query_params.get("uid", [None])[0]
 
-if "user_id" not in st.session_state:
-    if query_uid:
-        # Use URL if present on first page load
-        st.session_state.user_id = query_uid
-    else:
-        # No URL param, generate new
-        new_id = uuid.uuid4().hex[:8]
-        st.session_state.user_id = new_id
-        # Set param and force reload
-        st.query_params["uid"] = new_id
-        st.rerun()  # This halts execution here!
+st.set_page_config(page_title="RAG App Login", page_icon="🔐")
+
+
+
+# 🔥 Step 1: Check if this is the POST callback from FastAPI
+
+if st.session_state.get("user") is None:
+    try:
+        # Streamlit catches POST body via query params workaround
+        query_params = st.query_params
+        token_list = query_params.get("token")
+        log.info(f" Token List -> {token_list}")
         
-# Always use session_state after its initialized
-user_id = st.session_state.user_id
+        if token_list:
+            jwt_token = token_list # extract token from url POST hack
 
-st.write(f"User ID: {user_id}")
+            try:
+                decoded = jwt.decode(jwt_token, JWT_SECRET, algorithms=[JWT_ALGO])
+                user_info = decoded["user"]
 
-st.write(f"✅ Your persistent user ID: {user_id}")
+                # Save login info in session
+                st.session_state["user"] = user_info
+                st.session_state["jwt_token"] = jwt_token
+
+                st.query_params.clear()
+
+        
+            except jwt.ExpiredSignatureError:
+                st.error("Login expired! Please log in again.")
+                st.stop()
+
+            except jwt.InvalidTokenError:
+                st.error("Invalid login token.")
+                st.stop()
+    except Exception:
+        log.exception("Login failed")
+
+
+# 🔥 Step 2: If no user logged in → show Google login
+# ---------------------------
+if "user" not in st.session_state or st.session_state["user"] is None:
+    st.subheader("Please log in to continue")
+    st.markdown(f'<a href="{API_URL}/login" target="_self">👉 Log in with Google</a>',unsafe_allow_html=True)
+    st.stop()
+
+
+# 🔥 Step 3: Logged-in UI
+# ---------------------------
+user = st.session_state["user"]
+jwt_token = st.session_state["jwt_token"]
+
+#st.write("JWT Token: ", st.session_state.get("jwt_token"))
+
+st.success(f"Welcome {user['name']} 👋 ({user['email']})")
+user_id = user["sub"]
+
+if  st.button("Logout"):
+    response = requests.post(f"{API_URL}/logout", headers = st.session_state.get("auth_headers"))
+    if response.status_code == 200:
+        st.write(response.json().get("message"))
+        st.session_state.pop("user", None)
+        st.session_state.pop("jwt_token", None)
+        st.session_state.pop("auth_headers", None)
+        st.cache_data.clear()
+        #st.session_state.pop("available_sources", None)
+        st.rerun()
+    else:
+        st.session_state.clear()
+        st.rerun()
+
+
+if "auth_headers" not in st.session_state:
+    st.session_state.auth_headers = {"Authorization": f"Bearer {jwt_token}"}
+else:
+    st.session_state.auth_headers["Authorization"] = f"Bearer {jwt_token}"
+
+#st.write("AUTH HEADERS:", st.session_state.get("auth_headers"))
+
 
 if 'uploader_key' not in st.session_state:
     st.session_state.uploader_key = 0
 
 
-if "available_sources" not in st.session_state:
-    st.session_state.available_sources = []
-    #st.session_state.sources_loaded = False
-
 if "selected_doc" not in st.session_state:
     st.session_state.selected_doc = None
 
 @st.cache_data(ttl=3600)
-def get_sources(user_id):
+def get_sources():
     """Fetches available document sources from backend."""
     try:
         #st.write("Entering load_source function")
-        response = requests.get(f"{API_URL}/available_sources", params={'user_id': user_id})
+        response = requests.get(f"{API_URL}/available_sources", headers = st.session_state.get("auth_headers"))
         #st.write(f"🔍 Response status: {response.status_code}")
         #st.write(f"🔍 Raw response: {response.text}")
 
@@ -54,7 +112,7 @@ def get_sources(user_id):
             log.info("available_sources")
             return st.session_state.available_sources
         else:
-            log.info("Entering else function")
+            log.info("No available resources found")
             return []
 
     except Exception as e:
@@ -67,17 +125,20 @@ def load_sources(force_refresh=False):
     """Fetch sources with optional cache clear."""
     if force_refresh:
         get_sources.clear()
-    st.session_state.available_sources = get_sources(user_id)
-
-
-    if not st.session_state.available_sources:
-        st.session_state.pop("selected_doc", None)
+    st.session_state.available_sources = get_sources()
     return st.session_state.available_sources
 
+    #if not st.session_state.available_sources:
+        #st.session_state.pop("selected_doc", None)
+    
 
-# Normal refresh (fast, cached)
-st.session_state.available_sources = load_sources()
-#st.write(st.session_state.available_sources)
+if "available_sources" not in st.session_state:
+    st.write("Resouce not in session state")
+    st.session_state.available_sources = load_sources()
+#st.session_state.available_sources = load_sources()
+#else:
+    #st.write("Resouce in session state")
+    #st.write(st.session_state.available_sources)
 
 
 # --- UI HEADER --
@@ -93,19 +154,22 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file is not None and st.button("Upload File"):
-        with st.spinner("Processing file..."):
-         files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
-         response = requests.post(f"{API_URL}/upload_file", params = {"user_id" : user_id}, files=files,timeout =300)
-
-         if response.status_code == 200:
-            st.success(response.json().get("message"))
-            time.sleep(1.5)
-            load_sources(force_refresh=True)
-            st.session_state.uploader_key += 1  # new widget next time
-            st.session_state["uploaded_file"] = None
-            st.rerun()
-         else:
-            st.error(response.json().get("message"))
+        try:
+            log.info('Enter upload file function')
+            with st.spinner("Processing file..."):
+                files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
+                response = requests.post(f"{API_URL}/upload_file", headers = st.session_state["auth_headers"], files=files)
+                if response.status_code == 200:
+                    st.success(response.json().get("message"))
+                    time.sleep(1.5)
+                    load_sources(force_refresh=True)
+                    st.session_state.uploader_key += 1  # new widget next time
+                    st.session_state["uploaded_file"] = None
+                    st.rerun()
+                else:
+                    st.error(response.json().get("message"))
+        except Exception:
+            log.exception("File upload failed")
 
 
 
@@ -122,6 +186,7 @@ with st.form("query_form"):
 if submitted:
     if not user_query.strip():
         st.error("Please enter a question.")
+        st.stop()
 
     if uploaded_image:
         files = {'image': (uploaded_image.name, uploaded_image.getvalue(),uploaded_image.type)}
@@ -133,7 +198,7 @@ if submitted:
             "selected_doc" : selected_doc 
         }
     with st.spinner("Processing query..."):
-        response = requests.post(f"{API_URL}/query", data = data, files = files, params = {"user_id" : user_id})
+        response = requests.post(f"{API_URL}/query", data = data, files = files, headers = st.session_state["auth_headers"])
 
     if response.status_code == 200:
         result = response.json()
@@ -155,7 +220,8 @@ if st.session_state.available_sources:
                 if response.status_code == 200:
                     st.success(response.json().get("message", "Collection deleted successfully."))
                     load_sources(force_refresh=True)
-                    st.rerun()
+                    st.session_state.pop("selected_doc", None)
+                    #st.rerun()
                 else:
                     result = response.json().get("message", "Failed to delete collection.")
                     st.error(result)

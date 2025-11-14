@@ -10,7 +10,8 @@ git push -u origin main
 
 
 streamlit run src\frontend\app.py
-python -m uvicorn src.backend.main:app --host 0.0.0.0 --port 8000 --reload
+python -m uvicorn src.backend.main:app --host 0.0.0.0 --port 8000 
+python -m uvicorn src.backend.main:app --reload --reload-dir backend
 Explanation:
 
 python -m uvicorn → launch uvicorn through python
