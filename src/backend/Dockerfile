@@ -57,4 +57,7 @@ EXPOSE 8000
 # =============================
 # 8. Start Ollama + FastAPI together
 # =============================
-CMD ollama serve & uvicorn main:app --host 0.0.0.0 --port 8000
+CMD ollama serve & \
+    sleep 5 && \
+    ollama pull qwen2.5vl:3b && \
+    uvicorn src.backend.main:app --host 0.0.0.0 --port 8000
