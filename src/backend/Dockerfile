@@ -23,9 +23,6 @@ RUN apt-get update && apt-get install -y \
 RUN curl -fsSL https://ollama.com/install.sh | sh
 
 # =============================
-# 4. Pull Qwen model (3B VL)
-# =============================
-RUN ollama pull qwen2.5vl:3b
 
 # =============================
 # 5. Working Directory
