@@ -1,7 +1,7 @@
 # =============================
 # 1. Base Image
 # =============================
-FROM ubuntu:22.04
+FROM python:3.10.18-slim
 
 # Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
