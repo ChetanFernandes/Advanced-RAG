@@ -7,7 +7,7 @@ services:
     env: docker
     rootDir: .                     # 👈 Project ROOT as build context
     dockerfilePath: src/backend/Dockerfile
-    plan: starter                  # Needed because Ollama + Qwen need RAM
+    plan: free              # Needed because Ollama + Qwen need RAM
     autoDeploy: true
     healthCheckPath: /docs         # FastAPI swagger route to test if backend is live
 
