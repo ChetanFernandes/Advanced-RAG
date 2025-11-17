@@ -2,9 +2,7 @@ from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, Sy
 from backend.image_processing_bytes import extract_Image_summaries
 from langchain_core.output_parsers import StrOutputParser
 import asyncio
-import streamlit as st
 from langchain.indexes import index
-from models import *
 from langchain_community.retrievers import BM25Retriever
 from typing import List
 from langchain_core.runnables import chain
@@ -251,13 +249,6 @@ class question_answering:
             log.exception("Result extraction failed")
             return [], query
 
-        # Retrieve Answer First
-        # Sends the query to the qa_chain.
-        # The retriever pulls relevant documents.
-        # The LLM summarizes them.
-        # "result" holds the actual answer
-        
-        # Let the agent decide whether to use tools/memory
 
     
     

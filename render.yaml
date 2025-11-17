@@ -1,0 +1,24 @@
+services:
+  # =============================
+  # Backend: FastAPI + Ollama + Qwen
+  # =============================
+  - name: rag-backend
+    type: web
+    env: docker
+    rootDir: .                     # 👈 Project ROOT as build context
+    dockerfilePath: src/backend/Dockerfile
+    plan: starter                  # Needed because Ollama + Qwen need RAM
+    autoDeploy: true
+    healthCheckPath: /docs         # FastAPI swagger route to test if backend is live
+
+  # =============================
+  # Frontend: Streamlit UI
+  # =============================
+  - name: rag-frontend
+    type: web
+    env: python
+    rootDir: src/frontend
+    plan: free                     # Streamlit can run on free tier
+    buildCommand: "pip install -r ../../requirements.txt"
+    startCommand: "streamlit run app.py --server.port 8501 --server.address 0.0.0.0"
+    autoDeploy: true

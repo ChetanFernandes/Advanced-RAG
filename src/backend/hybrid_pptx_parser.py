@@ -28,9 +28,16 @@ def pptx_processor(file_bytes):
         starting_page_number = 1,
         strategy = "hi-res")
         return raw_pptx_elements
+    
     except Exception:
         log.exception("processing ppt failed")
         return []
+        
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        log.info(f"Tmp File removed: {tmp_path}")
+
 
 
 def extract_images_from_pptx(file_bytes: str, output_dir):
@@ -93,11 +100,11 @@ def extract_pptx_elements(file_name,file_bytes,user_id):
         except Exception:
             log.exception("[PPT_PARSE] Text extraction failed.")
         
-        doc_image_info  = extract_images_from_pptx(file_bytes, output_dir)
+        pptx_image_info  = extract_images_from_pptx(file_bytes, output_dir)
 
         Image_summaries = []
 
-        if doc_image_info:
+        if pptx_image_info:
             log.info('Pass extracted images for summarization')
             Image_summaries = asyncio.run(extract_Image_summaries(output_dir))
             if Image_summaries:
@@ -119,12 +126,6 @@ def extract_pptx_elements(file_name,file_bytes,user_id):
     except Exception as e:
         log.exception("Creating documents object failed")
         return [], f"PPT extraction failed: {e}"
-    
-    finally:
-        if output_dir and os.path.exists(output_dir):
-            shutil.rmtree(output_dir, ignore_errors=True)
-            log.info(f"[PDF_PARSE] Cleaned up directory: {output_dir}")
-        else:
-            log.warning(f"⚠️ Output directory not found, skipping cleanup: {output_dir}")
+
 
 

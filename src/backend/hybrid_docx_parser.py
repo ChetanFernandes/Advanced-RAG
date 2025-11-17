@@ -29,6 +29,10 @@ def docx_processor(file_bytes):
     except Exception:
         log.exception("Doc processing failed")
         return []
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        log.info(f"Tmp File removed: {tmp_path}")
 
 
 def extract_images_from_docx(file_bytes: str, output_dir:str):
@@ -79,6 +83,7 @@ def extract_docx_elements(file_name,file_bytes,user_id):
         doc_image_info  = extract_images_from_docx(file_bytes, output_dir)
 
         Image_summaries = []
+    
         if doc_image_info:
             image_paths = [img["path"] for img in doc_image_info]
             Image_summaries = asyncio.run(extract_Image_summaries(image_paths))
@@ -87,8 +92,8 @@ def extract_docx_elements(file_name,file_bytes,user_id):
                  log.info(f"cleaned image summaries extracted successfully. Count: {len(Image_summaries)}")
             else:
                 Image_summaries = []
-     
         
+     
         log.info(f"[DOC_PARSE] Combining text and image summaries...")
         final = final_doc(Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables, Image_summaries, file_name)
         documents = final.overall()
@@ -103,13 +108,14 @@ def extract_docx_elements(file_name,file_bytes,user_id):
     except Exception as e:
         log.exception("Creating documents object failed")
         return [], f"DOCx extraction failed: {e}"
-    
+    '''
     finally:
         if output_dir and os.path.exists(output_dir):
             shutil.rmtree(output_dir, ignore_errors=True)
             log.info(f"[DOC_PARSE] Cleaned up directory: {output_dir}")
         else:
             log.warning(f" Output directory not found, skipping cleanup: {output_dir}")
+    '''
 
 
 

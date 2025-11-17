@@ -5,27 +5,43 @@ from logger_config import log
 import jwt
 import extra_streamlit_components as stx
 
+st.set_page_config(page_title="RAG App Login", page_icon="🔐")
+st.markdown("<h2>⚡🧠 Advanced Agentic RAG + ChatGPT</h3>", unsafe_allow_html=True)
 
-cookie_manager = stx.CookieManager()
 
 API_URL = "http://localhost:8000"
-JWT_SECRET = st.secrets["auth"]["JWT_SECRET"]
+JWT_SECRET = st.secrets["JWT_SECRET"]
 JWT_ALGO = "HS256"
+cookie_manager = stx.CookieManager()
 
 
-st.set_page_config(page_title="RAG App Login", page_icon="🔐")
+# Initialize flags
+
+st.session_state.setdefault("user", None)
+st.session_state.setdefault("jwt_token", None)
+st.session_state.setdefault("auth_headers", None)
+st.session_state.setdefault("uploader_key", 0)
+st.session_state.setdefault("sources_loaded", False)
+st.session_state.setdefault("available_sources", [])
+st.session_state.setdefault("uploaded_file", [])
+st.session_state.setdefault("selected_doc", [])
+st.session_state.setdefault("logging_out", False)
+st.session_state.setdefault("did_oauth", False)
+
 
 # 1. First: Try to load user from cookies
-if not st.session_state.get("logging_out"):
+if not st.session_state.get("logging_out"): # If False, then run this block.
     user_cookie = cookie_manager.get("user")
     token_cookie = cookie_manager.get("jwt_token")
 else:
     user_cookie = None
     token_cookie = None
 
+# Clear logout flag for next run
 if "logging_out" in st.session_state:
     st.session_state.pop("logging_out")
 
+# If cookies contain valid user info → restore session
 if user_cookie and token_cookie:
     st.session_state["user"] = user_cookie
     st.session_state["jwt_token"] = token_cookie
@@ -33,14 +49,12 @@ if user_cookie and token_cookie:
 
 # 2. Next: Try OAuth callback ONLY IF no user found in session_state
 # -------------------------------------------------------------
-if "user" not in st.session_state or st.session_state["user"] is None:
-        
+if "user" not in st.session_state:
         # Read the token returned from FastAPI callback
         query_params = st.query_params
         token_list = query_params.get("token")
-        log.info(f" Token List -> {token_list}")
-        
-        if token_list:
+
+        if token_list and not st.session_state["did_oauth"]:  
             jwt_token = token_list # extract token from url POST hack
 
             try:
@@ -51,9 +65,15 @@ if "user" not in st.session_state or st.session_state["user"] is None:
                 st.session_state["user"] = user_info
                 st.session_state["jwt_token"] = jwt_token
 
+
+                #Prevent repeat OAuth handling
+                st.session_state["did_oauth"] = True 
+
+                # Store cookies
                 cookie_manager.set("user", user_info, key="cookie_user_setter")
                 cookie_manager.set("jwt_token", jwt_token, key="cookie_jwt_setter")
-
+       
+                # Prevent repeat OAuth handling
                 st.query_params.clear()
 
         
@@ -80,43 +100,10 @@ if "user" not in st.session_state or st.session_state["user"] is None:
 # ---------------------------
 user = st.session_state["user"]
 jwt_token = st.session_state["jwt_token"]
-
 st.success(f"Welcome {user['name']} 👋 ({user['email']})")
+st.session_state.auth_headers = {"Authorization": f"Bearer {jwt_token}"}
 user_id = user["sub"]
 
-if  st.button("Logout"):
-    response = requests.post(f"{API_URL}/logout", headers = st.session_state.get("auth_headers"))
-    if response.status_code == 200:
-        st.write(response.json().get("message"))
-        st.session_state["logging_out"] = True 
-        st.session_state.pop("user", None)
-        st.session_state.pop("jwt_token", None)
-        st.session_state.pop("auth_headers", None)
-        st.cache_data.clear()
-        cookie_manager.delete("user", key="cookie_user_setter")
-        cookie_manager.delete("jwt_token", key="cookie_jwt_setter")
-        #st.session_state.pop("available_sources", None)
-        st.rerun()
-    else:
-        st.session_state["logging_out"] = True
-        st.session_state.clear()
-        st.rerun()
-
-
-if "auth_headers" not in st.session_state:
-    st.session_state.auth_headers = {"Authorization": f"Bearer {jwt_token}"}
-else:
-    st.session_state.auth_headers["Authorization"] = f"Bearer {jwt_token}"
-
-#st.write("AUTH HEADERS:", st.session_state.get("auth_headers"))
-
-
-if 'uploader_key' not in st.session_state:
-    st.session_state.uploader_key = 0
-
-
-if "selected_doc" not in st.session_state:
-    st.session_state.selected_doc = None
 
 @st.cache_data(ttl=3600)
 def get_sources():
@@ -128,9 +115,7 @@ def get_sources():
         #st.write(f"🔍 Raw response: {response.text}")
 
         if response.status_code == 200:
-            st.session_state.available_sources = response.json().get("sources", [])
-            log.info("available_sources")
-            return st.session_state.available_sources
+            return response.json().get("sources", [])
         else:
             log.info("No available resources found")
             return []
@@ -141,34 +126,20 @@ def get_sources():
         return []
 
 
-def load_sources(force_refresh=False):
-    """Fetch sources with optional cache clear."""
-    if force_refresh:
-        get_sources.clear()
-    st.session_state.available_sources = get_sources()
-    return st.session_state.available_sources
-
-    #if not st.session_state.available_sources:
-        #st.session_state.pop("selected_doc", None)
-    
-
-if "available_sources" not in st.session_state:
-    st.write("Resouce not in session state")
-    st.session_state.available_sources = load_sources()
-#st.session_state.available_sources = load_sources()
-#else:
-    #st.write("Resouce in session state")
-    #st.write(st.session_state.available_sources)
+if not st.session_state["sources_loaded"]:
+    st.session_state["available_sources"] = get_sources()
+    st.session_state["sources_loaded"] = True
 
 
 # --- UI HEADER --
-st.title("Advanced_RAG + Chat_GPT")
-st.header("Upload File to Build a RAG System")
+
+
+st.markdown("<h3>📁 Upload File to Build Your RAG System</h3>", unsafe_allow_html=True)
 
 
 #File uploaded
 uploaded_file = st.file_uploader(
-    "Choose a file",
+    "Choose file",
     type=["xlsx", "docx", "pptx", "csv", "txt", "pdf"],
     key=f"upload_{st.session_state['uploader_key']}"
 )
@@ -181,8 +152,8 @@ if uploaded_file is not None and st.button("Upload File"):
                 response = requests.post(f"{API_URL}/upload_file", headers = st.session_state["auth_headers"], files=files)
                 if response.status_code == 200:
                     st.success(response.json().get("message"))
-                    time.sleep(1.5)
-                    load_sources(force_refresh=True)
+                    get_sources.clear()   
+                    st.session_state["sources_loaded"] = False
                     st.session_state.uploader_key += 1  # new widget next time
                     st.session_state["uploaded_file"] = None
                     st.rerun()
@@ -195,7 +166,8 @@ if uploaded_file is not None and st.button("Upload File"):
 
 
 # --- Query Interface ---
-st.header("Multimodal Query Interface")
+
+st.markdown("<h3>🧠🖼️ Multimodal Query Interface</h3>", unsafe_allow_html=True)
 
 with st.form("query_form"):
     user_query = st.text_input("Enter your query")
@@ -206,7 +178,9 @@ with st.form("query_form"):
 if submitted:
     if not user_query.strip():
         st.error("Please enter a question.")
-        st.stop()
+        time.sleep(2)
+        st.rerun()
+      
 
     if uploaded_image:
         files = {'image': (uploaded_image.name, uploaded_image.getvalue(),uploaded_image.type)}
@@ -231,7 +205,7 @@ if submitted:
     #st.write(response.json().get("result", "No result found") if response.status_code == 200 else response.json().get("status", "Failed to answer question (Internal_error)"))
 
 
-st.header("🗑️ Manage Collection")
+st.markdown("<h3>🗑️ Manage Collection</h3>", unsafe_allow_html=True)
 
 if st.session_state.available_sources:
     if st.button("Delete your document uploaded in DB"):
@@ -239,8 +213,9 @@ if st.session_state.available_sources:
                 response = requests.delete(f"{API_URL}/delete_collection",params={"user_id": user_id},timeout=120)
                 if response.status_code == 200:
                     st.success(response.json().get("message", "Collection deleted successfully."))
-                    load_sources(force_refresh=True)
-                    st.session_state.pop("selected_doc", None)
+                    get_sources.clear()
+                    st.session_state["sources_loaded"] = False
+                    st.session_state.pop("selected_doc", False)
                     st.rerun()
                 else:
                     result = response.json().get("message", "Failed to delete collection.")
@@ -249,8 +224,26 @@ if st.session_state.available_sources:
 else:
     st.info("No collection in DB exists. Upload your documents to use RAG.")
   
+st.markdown("<h3>🚪 Log out from your session</h3>", unsafe_allow_html=True)
 
-
+if  st.button("Logout to wipe out your current session and session memory", type = "primary"):
+    response = requests.post(f"{API_URL}/logout", headers = st.session_state.get("auth_headers"))
+    if response.status_code == 200:
+        st.write(response.json().get("message"))
+        st.session_state["logging_out"] = True 
+        st.session_state.pop("user", None)
+        st.session_state.pop("jwt_token", None)
+        st.session_state.pop("auth_headers", None)
+        #st.session_state.clear()
+        cookie_manager.delete("user", key="cookie_user_setter")
+        cookie_manager.delete("jwt_token", key="cookie_jwt_setter")
+        #st.cache_data.clear()
+        #st.session_state.pop("available_sources", None)
+        st.rerun()
+    else:
+        st.session_state["logging_out"] = True
+        st.session_state.clear()
+        st.rerun()
 
 
 

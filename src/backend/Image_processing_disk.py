@@ -2,7 +2,7 @@
 from langchain_core.messages import HumanMessage, SystemMessage
 from PIL import Image
 import os, io, base64
-from langchain_community.chat_models import ChatOllama
+from langchain_ollama import ChatOllama
 import asyncio
 from src.logger_config import log
 

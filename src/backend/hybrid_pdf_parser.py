@@ -15,7 +15,7 @@ def pdf_processor(file_bytes,output_dir):
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             tmp.write(file_bytes)
-            tmp.flush()                  
+            tmp.flush()                  # Ensures the bytes are physically written to disk before using them.
             tmp_path = tmp.name
         log.info(f"Processing temp PDF: {tmp_path}")
     
@@ -36,7 +36,6 @@ def pdf_processor(file_bytes,output_dir):
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
         log.info(f"Tmp File removed: {tmp_path}")
-
 
   
 def extract_pdf_elements(file_name,file_bytes,user_id):
@@ -66,7 +65,7 @@ def extract_pdf_elements(file_name,file_bytes,user_id):
             log.exception("[PDF_PARSE] Text extraction failed.")
   
         Image_summaries = []
-        
+        '''
         images = [f for f in os.listdir(output_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
         if images:
@@ -77,7 +76,7 @@ def extract_pdf_elements(file_name,file_bytes,user_id):
                  log.info(f"cleaned image summaries extracted successfully. Count: {len(Image_summaries)}")
             else:
                 Image_summaries = []
-
+        '''
         log.info(f"[PDF_PARSE] Combining text and image summaries...")
         final = final_doc(Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables, Image_summaries, file_name)
         documents = final.overall()
@@ -92,13 +91,14 @@ def extract_pdf_elements(file_name,file_bytes,user_id):
     except Exception as e:
         log.exception("Creating documents object failed")
         return [], f"PDF extraction failed: {e}"
-    
+    '''
     finally:
         if output_dir and os.path.exists(output_dir):
             shutil.rmtree(output_dir, ignore_errors=True)
             log.info(f"[PDF_PARSE] Cleaned up directory: {output_dir}")
         else:
             log.warning(f"⚠️ Output directory not found, skipping cleanup: {output_dir}")
+    '''
 
 
     

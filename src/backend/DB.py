@@ -2,7 +2,7 @@
 from langchain.storage import InMemoryByteStore
 from langchain_astradb import AstraDBVectorStore
 from langchain.retrievers.multi_vector import MultiVectorRetriever
-from models import *
+from src.models import *
 from langchain.indexes import SQLRecordManager
 import os
 from dotenv import load_dotenv

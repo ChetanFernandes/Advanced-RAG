@@ -30,6 +30,10 @@ def extract_text_tables(file_bytes):
     except Exception:
         log.exception("Extracting excel elements failed")
         return []
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        log.info(f"Tmp File removed: {tmp_path}")
 
 def extract_images(file_bytes:bytes,output_dir:str):
     '''
@@ -92,7 +96,7 @@ def extract_excel_elements(file_name,file_bytes,user_id):
         log.info(f"successfully extracted images -> \n {excel_image_info}")
 
         Image_summaries = []
-
+        
         if excel_image_info:
             log.info("Extracting image_path")
             image_paths = [img["path"] for img in excel_image_info]
@@ -105,7 +109,7 @@ def extract_excel_elements(file_name,file_bytes,user_id):
                  log.info(f"cleaned image summaries extracted successfully. Count: {len(Image_summaries)}")
             else:
                 Image_summaries = []
-
+        
         log.info("Entering function to get final information")
         final = final_doc(Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables, Image_summaries, file_name)
         documents = final.overall()
@@ -120,14 +124,14 @@ def extract_excel_elements(file_name,file_bytes,user_id):
     except Exception as e:
         log.exception("Creating documents object failed")
         return [], f"Excel extraction failed: {e}"
-    
+    '''
     finally:
         if output_dir and os.path.exists(output_dir):
             shutil.rmtree(output_dir, ignore_errors=True)
             log.info(f"[Excel_PARSE] Cleaned up directory: {output_dir}")
         else:
             log.warning(f"⚠️ Output directory not found, skipping cleanup: {output_dir}")
-
+    '''
 
 
 

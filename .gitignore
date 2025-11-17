@@ -3,11 +3,10 @@ __pycache__/
 *.py[codz]
 *$py.class
 .streamlit/secrets.toml
+test.ipynb
 # C extensions
 *.so
-test.ipynb
 all_images/
-src\frontend\.streamlit
 # Distribution / packaging
 .Python
 build/
