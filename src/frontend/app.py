@@ -2,14 +2,32 @@ import streamlit as st
 import requests
 import time
 import jwt
-from src.logger_config import log
+from logger_config import log
 import extra_streamlit_components as stx
 
 st.set_page_config(page_title="RAG App Login", page_icon="🔐")
 st.markdown("<h2>⚡🧠 Advanced Agentic RAG + ChatGPT</h3>", unsafe_allow_html=True)
 
 
-API_URL = "http://localhost:8000"
+API_URL = "https://rag-frontend-ffw4.onrender.com"
+
+# ---- BACKEND HEALTH CHECK ----
+try:
+    health = requests.get(f"{API_URL}/health", timeout=5)
+    if health.status_code != 200:
+        st.error("⛔ Backend not reachable. Try again in a minute.")
+        st.stop()
+        
+    health_data = health.json()
+    if health_data.get("success") != "Backend is healthy":
+        st.error("⚠ Backend not fully ready. Refresh after a few seconds.")
+        st.stop()
+except:
+    st.error("⚠ Backend is starting or unreachable. Refresh after 10-20 seconds.")
+    st.stop()
+
+
+
 JWT_SECRET = st.secrets["JWT_SECRET"]
 JWT_ALGO = "HS256"
 cookie_manager = stx.CookieManager()

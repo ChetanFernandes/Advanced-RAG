@@ -90,8 +90,9 @@ async def root():
     return {"message": "Backend is running"}
 
 @app.get("/health")
-async def health():
-    return {"status": "ok"}
+async def health(request : Request):
+    return JSONResponse({'success': 'Backend is healthy'},status_code=200)
+     
 
 app.add_middleware(
     SessionMiddleware,
