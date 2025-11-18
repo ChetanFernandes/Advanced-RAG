@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import time
 import jwt
-from logger_config import log
+from src.logger_config import log
 import extra_streamlit_components as stx
 
 st.set_page_config(page_title="RAG App Login", page_icon="🔐")
@@ -17,7 +17,7 @@ try:
     if health.status_code != 200:
         st.error("⛔ Backend not reachable. Try again in a minute.")
         st.stop()
-        
+
     health_data = health.json()
     if health_data.get("success") != "Backend is healthy":
         st.error("⚠ Backend not fully ready. Refresh after a few seconds.")
