@@ -1,7 +1,9 @@
 import streamlit as st
 import requests
 import time
-import jwt
+import jwt, sys,os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from src.logger_config import log
 import extra_streamlit_components as stx
 

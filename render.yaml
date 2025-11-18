@@ -20,5 +20,5 @@ services:
     rootDir: .
     plan: free                     # Streamlit can run on free tier
     buildCommand: "pip install -r src/frontend/requirements.txt"
-    startCommand: "streamlit run src/frontend/app.py --server.port 8501 --server.address 0.0.0.0"
+    startCommand: "streamlit run -m src/frontend/app.py --server.port 8501 --server.address 0.0.0.0"
     autoDeploy: true
