@@ -56,7 +56,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 # =============================
 # 7. Expose FastAPI port
 # =============================
-EXPOSE 8000
+EXPOSE 10000
 
 # =============================
 # 8. Start Ollama + FastAPI together
