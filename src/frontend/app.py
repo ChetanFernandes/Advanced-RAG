@@ -1,8 +1,8 @@
 import streamlit as st
 import requests
 import time
-from logger_config import log
 import jwt
+from src.logger_config import log
 import extra_streamlit_components as stx
 
 st.set_page_config(page_title="RAG App Login", page_icon="🔐")
@@ -49,7 +49,7 @@ if user_cookie and token_cookie:
 
 # 2. Next: Try OAuth callback ONLY IF no user found in session_state
 # -------------------------------------------------------------
-if "user" not in st.session_state:
+if not st.session_state.get("user") or not st.session_state.get("jwt_token"):
         # Read the token returned from FastAPI callback
         query_params = st.query_params
         token_list = query_params.get("token")
