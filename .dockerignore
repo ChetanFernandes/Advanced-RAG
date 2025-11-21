@@ -1,0 +1,11 @@
+.git
+__pycache__/
+*.pyc
+.env
+venv/
+*.db
+*.log
+logs/
+notebooks/
+*.ipynb
+.cache/

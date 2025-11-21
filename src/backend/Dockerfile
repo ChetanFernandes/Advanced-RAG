@@ -13,10 +13,10 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# 1) Install backend dependencies
-COPY src/backend/requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Install backend dependencies
+COPY src/backend/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # 2) Create src package folder inside container
 RUN mkdir -p /app/src

@@ -103,6 +103,8 @@ origins = [
     "http://127.0.0.1:8501",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "https://genaipoconline.online",
+    "http://genaipoconline.online",
 ]
 
 
@@ -129,7 +131,7 @@ async def login(request: Request):
     """Redirect user to Google OAuth2 consent screen"""
     try:
         log.info("Inside login function")
-        redirect_uri = request.url_for("auth_callback")
+        redirect_uri = "https://genaipoconline.online/api/auth/callback"
         log.info(f"redirect_uri - {redirect_uri}")
         return await oauth.google.authorize_redirect(request, redirect_uri)
     except Exception:
@@ -154,7 +156,7 @@ async def auth_callback(request: Request):
         html = f"""
         <html>
         <body onload="document.forms[0].submit()">
-            <form method="GET" action="http://localhost:8501/">
+            <form method="GET" action="https://genaipoconline.online/">
                 <input type="hidden" name="token" value="{jwt_token}">
             </form>
             Redirecting...
@@ -172,7 +174,7 @@ async def available_sources(user: dict = Depends(verify_jwt)):
         if not user:
             return RedirectResponse(url="/login")
         '''
-        user_id = user["sub"]  # Google unique ID
+        user_id = user["sub"].strip() # Google unique ID
         log.info(f"Authenticated user: {user['email']} ({user_id})")
         try:
             user_data = app.state.user_collections.get(user_id, {})

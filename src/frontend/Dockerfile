@@ -2,13 +2,9 @@ FROM python:3.10.18-slim
 
 WORKDIR /app
 
-# Copy ONLY requirements first (to use Docker layer caching)
-COPY src/frontend/requirements.txt .
-
-RUN pip install --no-cache-dir -r requirements.txt
-
-# 2) Create src package inside container
-RUN mkdir -p /app/src
+# 2) Install dependencies first (best caching)
+COPY src/frontend/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # 3) Copy only what frontend actually needs
 COPY src/frontend /app/src/frontend

@@ -13,11 +13,7 @@ st.markdown("<h2>⚡🧠 Advanced Agentic RAG + ChatGPT</h3>", unsafe_allow_html
 # -------------------- BACKEND BASE URL --------------------
 # In Docker (AWS): BACKEND_URL=/api   → calls like /api/health
 # Locally: BACKEND_URL not set       → http://localhost:8000
-if "BACKEND_URL" in os.environ:
-    API_URL = os.environ["BACKEND_URL"].rstrip("/")  # e.g. "/api"
-else:
-    API_URL = "http://localhost:8000"               # local dev
-
+API_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")
 log.info(f"Using Backend URL: {API_URL}")
 
 
@@ -230,7 +226,7 @@ if submitted:
             "selected_doc" : selected_doc 
         }
     with st.spinner("Processing query..."):
-        response = requests.post(f"{API_URL}/query", data = data, files = files) #headers = st.session_state["auth_headers"])
+        response = requests.post(f"{API_URL}/query", data = data, files = files, headers = st.session_state["auth_headers"])
 
     if response.status_code == 200:
         result = response.json()
