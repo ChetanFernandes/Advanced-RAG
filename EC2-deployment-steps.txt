@@ -35,16 +35,33 @@ sudo systemctl status nginx
 http://YOUR_EC2_IP = You should see the default Nginx Welcome Page.
 
 
+Clone your repo:
+git clone <YOUR_GITHUB_REPO_URL>
+
+Option A — Best: tree command (install once)
+sudo apt install -y tree
+
+tree -L 4
+
+mv docker-compose.prod.yml docker-compose.yml
+
+NGNIX folders
+
+sudo mkdir -p /etc/letsencrypt
+sudo mkdir -p /var/www/html
+sudo chown -R www-data:www-data /var/www/html
 
 
-# 4. Copy nginx-production.conf to EC2
-sudo nano /etc/nginx/sites-available/genaipoconline.conf
-# (paste content)
 
-sudo ln -s /etc/nginx/sites-available/genaipoconline.conf /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
+1️⃣ Build and start all containers
 
-# 5. Run Certbot to enable HTTPS
-sudo apt install certbot python3-certbot-nginx -y
-sudo certbot --nginx -d genaipoconline.online -d www.genaipoconline.online
+docker-compose up -d --build
+
+docker ps
+
+curl http://localhost:8000/health
+curl http://localhost:8501/
+
+
+sudo apt update
+sudo apt install -y certbot python3-certbot-nginx

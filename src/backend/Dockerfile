@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y \
     libxrender1 \
     libxext6 \
     libmagic1 \
+    poppler-utils \
+    tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
