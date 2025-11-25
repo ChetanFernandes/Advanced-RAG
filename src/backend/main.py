@@ -95,10 +95,7 @@ async def health(request : Request):
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key=os.getenv("SECRET_KEY", "supersecret"),
-    same_site="none",
-    https_only=True,
-    session_cookie="session"
+    secret_key=os.getenv("SECRET_KEY", "supersecret")
 )
 
 origins = [
