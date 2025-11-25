@@ -259,6 +259,8 @@ Ports open: 22, 80, 443
 Attach key pair
 
 PART 2 — CONNECT TO EC2
+chmod 400 "genai-prod-key.pem"
+
 ssh -i /path/to/key.pem ubuntu@EC2_PUBLIC_IP
 
 PART 3 — INSTALL DOCKER & DOCKER COMPOSE
