@@ -261,7 +261,7 @@ Attach key pair
 PART 2 — CONNECT TO EC2
 chmod 400 "genai-prod-key.pem"
 
-ssh -i /path/to/key.pem ubuntu@EC2_PUBLIC_IP
+ssh -i genai-prod-key.pem ubuntu@13.53.175.219
 
 PART 3 — INSTALL DOCKER & DOCKER COMPOSE
 sudo apt update
@@ -311,18 +311,32 @@ mkdir -p models/blobs
 mkdir -p models/qwen2.5vl
 mkdir -p clip_weights
 
-PART 7 — DOCKER COMPOSE (NO NGINX IN DOCKER) Use this final docker-compose.yml:
+scp -i genai-prod-key.pem -r \
+  "/d/GEN AI/GEN_AI_MASTERS_Bappy/Langchain/Advanced_prod_RAG/models/blobs" \
+  ubuntu@13.53.175.219:/home/ubuntu/Advanced-RAG/models/
 
-PART 8 — UPDATE BACKEND DOCKERFILE - nano src/backend/Dockerfile
+scp -i genai-prod-key.pem -r \
+  "/d/GEN AI/GEN_AI_MASTERS_Bappy/Langchain/Advanced_prod_RAG/models/qwen2.5vl" \
+  ubuntu@13.53.175.219:/home/ubuntu/Advanced-RAG/models/
+
+scp -i genai-prod-key.pem -r \
+  "/d/GEN AI/GEN_AI_MASTERS_Bappy/Langchain/Advanced_prod_RAG/clip_weights" \
+  ubuntu@13.53.175.219:/home/ubuntu/Advanced-RAG/
+
+
 
 PART 9 — BUILD AND START DOCKER
-docker-compose build backend
+
 docker-compose up -d --build
+docker-compose build backend
 docker ps
 
 
 PART 10 — HOST NGINX CONFIG (WITHOUT SSL)
-sudo nano /etc/nginx/sites-available/genaipoconline
+sudo rm /etc/nginx/sites-available/genaipoconline
+sudo rm /etc/nginx/sites-enabled/genaipoconline
+sudo nano /etc/nginx/sites-available/genaipoconline.conf
+
 paste :-
 server {
     listen 80;

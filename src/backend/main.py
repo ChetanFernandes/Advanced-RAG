@@ -96,6 +96,9 @@ async def health(request : Request):
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv("SECRET_KEY", "supersecret"),
+    same_site="none",
+    https_only=True,
+    cookie_secure=True
 )
 
 origins = [
@@ -157,7 +160,7 @@ async def auth_callback(request: Request):
         html = f"""
         <html>
         <body onload="document.forms[0].submit()">
-            <form method="GET" action="http://localhost:8501">
+            <form method="GET" action="https://genaipoconline.online/">
                 <input type="hidden" name="token" value="{jwt_token}">
             </form>
             Redirecting...
