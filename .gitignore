@@ -74,13 +74,15 @@ instance/
 # Sphinx documentation
 docs/_build/
 
-clip_weights/
+
 
 # PyBuilder
 .pybuilder/
 target/
 
-models/blobs/
+models/blobs/*
+models/qwen2.5vl/*
+!models/qwen2.5vl/3b
 clip_weights/
 
 # Jupyter Notebook
