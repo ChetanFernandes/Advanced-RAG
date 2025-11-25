@@ -313,7 +313,7 @@ mkdir -p clip_weights
 
 scp -i genai-prod-key.pem -r \
   "/d/GEN AI/GEN_AI_MASTERS_Bappy/Langchain/Advanced_prod_RAG/models/blobs" \
-  ubuntu@13.53.175.219:/home/ubuntu/Advanced-RAG/models/
+  ubuntu@51.20.32.189:/home/ubuntu/Advanced-RAG/models/
 
 scp -i genai-prod-key.pem -r \
   "/d/GEN AI/GEN_AI_MASTERS_Bappy/Langchain/Advanced_prod_RAG/models/qwen2.5vl" \
@@ -321,7 +321,7 @@ scp -i genai-prod-key.pem -r \
 
 scp -i genai-prod-key.pem -r \
   "/d/GEN AI/GEN_AI_MASTERS_Bappy/Langchain/Advanced_prod_RAG/clip_weights" \
-  ubuntu@13.53.175.219:/home/ubuntu/Advanced-RAG/
+  ubuntu@51.20.32.189:/home/ubuntu/Advanced-RAG/
 
 
 

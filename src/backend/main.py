@@ -98,7 +98,7 @@ app.add_middleware(
     secret_key=os.getenv("SECRET_KEY", "supersecret"),
     same_site="none",
     https_only=True,
-    cookie_secure=True
+    session_cookie="session"
 )
 
 origins = [
