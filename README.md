@@ -27,6 +27,7 @@ C:\Users\User\AppData\Local\Temp\tmpx22pd3.pdf
 
 #pipreqs . --force --savepath=requirements.txt
 
+https://genaipoconline.online
 
 
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -259,9 +260,9 @@ Ports open: 22, 80, 443
 Attach key pair
 
 PART 2 — CONNECT TO EC2
-chmod 400 "genai-prod-key.pem"
+chmod 400 "AG.pem"
 
-ssh -i genai-prod-key.pem ubuntu@51.21.195.67
+ssh -i RAG.pem ubuntu@13.53.96.223
 
 PART 3 — INSTALL DOCKER & DOCKER COMPOSE
 sudo apt update
@@ -311,24 +312,24 @@ mkdir -p models/blobs
 mkdir -p models/qwen2.5vl
 mkdir -p clip_weights
 
-scp -i genai-prod-key.pem -r \
+scp -i RAG.pem -r \
   "/d/GEN AI/GEN_AI_MASTERS_Bappy/Langchain/Advanced_prod_RAG/models/blobs" \
-  ubuntu@51.20.32.189:/home/ubuntu/Advanced-RAG/models/
+  ubuntu@51.21.169.168:/home/ubuntu/Advanced-RAG/models/
 
 scp -i genai-prod-key.pem -r \
   "/d/GEN AI/GEN_AI_MASTERS_Bappy/Langchain/Advanced_prod_RAG/models/qwen2.5vl" \
   ubuntu@13.53.175.219:/home/ubuntu/Advanced-RAG/models/
 
-scp -i genai-prod-key.pem -r \
+scp -i RAG.pem -r \
   "/d/GEN AI/GEN_AI_MASTERS_Bappy/Langchain/Advanced_prod_RAG/clip_weights" \
-  ubuntu@51.20.32.189:/home/ubuntu/Advanced-RAG/
+  ubuntu@51.21.169.168:/home/ubuntu/Advanced-RAG/
 
 
 
 PART 9 — BUILD AND START DOCKER
 
-docker-compose up -d --build
-docker-compose build backend
+docker compose up -d --build
+docker compose build backend
 docker ps
 
 
@@ -399,7 +400,7 @@ sudo systemctl reload nginx
 
 PART 11 — INSTALL CERTBOT SSL
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d genaipoconline.online -d www.genaipoconline.online
+sudo certbot --nginx --staging -d genaipoconline.online -d www.genaipoconline.online
 
 PART 12 — VERIFY EVERYTHING
 Frontend:
@@ -413,6 +414,15 @@ https://genaipoconline.online/api/health
 
 Backend Health
 curl https://genaipoconline.online/api/health
+
+curl http://127.0.0.1:8501
+curl http://127.0.0.1:8000/health
+curl http://localhost:11434/api/tags
+curl http://localhost:11434/api/generate -d '{
+  "model": "qwen2.5vl:3b",
+  "prompt": "Hello, who are you?"
+}'
+
 
 
 

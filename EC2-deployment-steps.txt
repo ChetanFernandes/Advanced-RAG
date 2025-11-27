@@ -69,6 +69,16 @@ sudo apt install -y certbot python3-certbot-nginx
 version: "3.9"
 
 services:
+  ollama:
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
+    container_name: ollama
+    restart: always
+    networks:
+      - app-net
+    ports:
+      - "11434:11434"
 
   backend:
     build:
@@ -83,7 +93,7 @@ services:
     expose:
       - "8000"                 # backend must be exposed, NOT published
     depends_on:
-      - frontend
+      - ollama
 
   frontend:
     build:

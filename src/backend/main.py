@@ -63,8 +63,9 @@ async def lifespan(app: FastAPI):
         app.state.ASTRA_DB = ConnectToAstraDB()
 
         #astra_index = await asyncio.to_thread(app.state.ASTRA_DB.add_index)
-
         app.state.llm = ChatOllama(model="qwen2.5vl:3b", base_url=os.getenv("OLLAMA_HOST"), temperature = 0.2)
+
+        #app.state.llm = ChatOllama(model="qwen2.5vl:3b", temperature = 0.5)
         #app.state.llm = EuriLLM()
         app.state.web_search_agent = web_agent(app.state.llm)
 
@@ -154,6 +155,7 @@ async def auth_callback(request: Request):
    
 
         # Auto-submit POST form to Streamlit
+        #form method="GET" action="http://127.0.0.1:8501">
         html = f"""
         <html>
         <body onload="document.forms[0].submit()">

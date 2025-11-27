@@ -98,6 +98,7 @@ class web_agent:
         f"Web Result:\n{raw_result}"
       )
         summary = self.llm.invoke(summary_prompt)
+        log.info(f"summary from tool is -{summary}")
          # Extract text from response
         if isinstance(summary, dict):
             return summary.get("output", "")
@@ -161,6 +162,7 @@ class web_agent:
                 }
 
             final_response_raw = await agent.ainvoke(inputs)
+            log.info(f"final_response_raw, {final_response_raw}")
 
             final_response = (final_response_raw["output"] if isinstance(final_response_raw, dict) else str(final_response_raw))
 
@@ -175,6 +177,7 @@ class web_agent:
             summary = await self.llm.ainvoke(
                 f"Summarize this observation into a concise Final Answer:\n{last_obs}"
             )
+            log.info('summary', summary)
             summary_text = summary.get("output", summary.content) if isinstance(summary, dict) else summary.content
 
             # Optional: store summary back to memory
