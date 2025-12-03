@@ -47,13 +47,12 @@ st.session_state.setdefault("sources_loaded", False)
 st.session_state.setdefault("available_sources", [])
 st.session_state.setdefault("uploaded_file", [])
 st.session_state.setdefault("selected_doc", [])
-st.session_state.setdefault("logging_out", False)
+st.session_state.setdefault("logging_out", False) # setdefault(key, value) checks whether the given key exists in st.session_state
 st.session_state.setdefault("did_oauth", False)
 
 
 
 if not st.session_state.get("logging_out"): # If False, then run this block.
-    #st.write("Eroror")
     user_cookie = cookie_manager.get("user")
     token_cookie = cookie_manager.get("jwt_token")
 else:
@@ -62,7 +61,6 @@ else:
 
 
 if user_cookie and token_cookie:
-    #st.write("Eroror")
     st.session_state["user"] = user_cookie
     st.session_state["jwt_token"] = token_cookie
 
@@ -146,10 +144,11 @@ def get_sources():
         #st.write("Entering load_source function")
         if "auth_headers" not in st.session_state or st.session_state["auth_headers"] is None:
             st.warning("Please log in first.")
+            login_url = f"{API_URL}/login"
+            st.markdown(f'<a href="{login_url}" target="_self">👉 Log in with Google</a>',unsafe_allow_html=True)
             st.stop()
+
         response = requests.get(f"{API_URL}/available_sources", headers = st.session_state.get("auth_headers"))
-        #st.write(f"🔍 Response status: {response.status_code}")
-        #st.write(f"🔍 Raw response: {response.text}")
 
         if response.status_code == 200:
             return response.json().get("sources", [])

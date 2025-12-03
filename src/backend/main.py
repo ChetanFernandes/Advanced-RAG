@@ -132,8 +132,8 @@ async def login(request: Request):
     """Redirect user to Google OAuth2 consent screen"""
     try:
         log.info("Inside login function")
-        redirect_uri = "https://genaipoconline.online/api/auth/callback"
-        #redirect_uri = "http://localhost:8000/auth/callback"
+        #redirect_uri = "https://genaipoconline.online/api/auth/callback"
+        redirect_uri = "http://localhost:8000/auth/callback"
         log.info(f"redirect_uri - {redirect_uri}")
         return await oauth.google.authorize_redirect(request, redirect_uri)
     except Exception:
@@ -155,11 +155,12 @@ async def auth_callback(request: Request):
    
 
         # Auto-submit POST form to Streamlit
+        #form method="GET" action="https://genaipoconline.online/">
         #form method="GET" action="http://127.0.0.1:8501">
         html = f"""
         <html>
         <body onload="document.forms[0].submit()">
-            <form method="GET" action="https://genaipoconline.online/">
+        <form method="GET" action=http://127.0.0.1:8501>
                 <input type="hidden" name="token" value="{jwt_token}">
             </form>
             Redirecting...
@@ -185,10 +186,7 @@ async def available_sources(user: dict = Depends(verify_jwt)):
             log.info(f"keys extracted from user_is {keys}")
             if "vector_store" not in keys:
                 log.warning(f"No vector_store found for user_id={user_id}")
-                return JSONResponse(
-                            content={"sources": [], "message": "No collection found for user {user_id}"},
-                            status_code=404)
-
+                return JSONResponse(content={"sources": [], "message": "No collection found for user {user_id}"},status_code=404)
             else:
                 vector_store = app.state.user_collections[user_id].get("vector_store")  
                 all_docs = await vector_store.asimilarity_search("", k=1000)
