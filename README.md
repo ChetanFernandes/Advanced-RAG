@@ -19,18 +19,18 @@ This README provides an end-to-end guide covering architecture, features, setup,
 📚 Table of Contents:-
 
 
-    1. Project Overview
-    2. Architecture
-    3. Features of RAG
-    4. Folder Structure
-    5. Environment Variables
-    6. Local Setup (Docker)
-    7. Production Deployment (AWS EC2)
-    8. NGINX Configuration
-    9. SSL Certificate Setup
-    10. Testing the Deployment
-    11. Useful Docker Commands
-    12. Troubleshooting
+      1. Project Overview
+      2. Architecture
+      3. Features of RAG
+      4. Folder Structure
+      5. Environment Variables
+      6. Local Setup (Docker)
+      7. Production Deployment (AWS EC2)
+      8. NGINX Configuration
+      9. SSL Certificate Setup
+      10. Testing the Deployment
+      11. Useful Docker Commands
+      12. Troubleshooting
     
 🧠 1. Project Overview:-
 
@@ -282,6 +282,7 @@ Tracking using Langsmith:-
 | **Slowest (P99)**         | **13–14 sec**    | Only 1% of requests are slow     |
 
 🎉 Author - Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
 
 
