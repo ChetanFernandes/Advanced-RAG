@@ -92,8 +92,6 @@ This README provides an end-to-end guide covering architecture, features, setup,
                       │ Exposed via Ngrok → HTTPS Tunnel     │
                       │ Example: https://abc.ngrok.app/api   │
                       └──────────────────────────────────────┘
-<img width="933" height="738" alt="Screenshot 2025-12-02 160030" src="https://github.com/user-attachments/assets/83820120-355e-4572-97c0-54816dcffe8a" />
-
 
 🚀 3. Features of RAG
       🧠 Agentic Intelligence
@@ -330,4 +328,5 @@ Tracking using Langsmith:-
 | **Slowest (P99)**         | **13–14 sec**    | Only 1% of requests are slow     |
 
 🎉 Author - Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
