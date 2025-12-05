@@ -123,11 +123,11 @@ This README provides an end-to-end guide covering architecture, features, setup,
 ☁️ 7. Production Deployment (AWS EC2)
 
     PART 1 — Launch the EC2 INSTANCE
-        1. Ubuntu 22.04 LTS
+           1. Ubuntu 22.04 LTS
 
     PART 2 — CONNECT TO EC2
-          1. chmod 400 "AG.pem"
-          2. ssh -i RAG.pem ubuntu@public_ip
+           1. chmod 400 "AG.pem"
+           2. ssh -i RAG.pem ubuntu@public_ip
 
     PART 3 — INSTALL DOCKER & DOCKER COMPOSE
       a. Step 1: Add Docker’s official GPG key
@@ -282,6 +282,7 @@ Tracking using Langsmith:-
 | **Slowest (P99)**         | **13–14 sec**    | Only 1% of requests are slow     |
 
 🎉 Author - Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
 
 
