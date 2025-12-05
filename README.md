@@ -53,6 +53,19 @@ This README provides an end-to-end guide covering architecture, features, setup,
 
 <img width="381" height="655" alt="image" src="https://github.com/user-attachments/assets/6cba5fcb-a1eb-488a-8b94-c0e3ef5033fc" />
 
+FULL REQUEST–RESPONSE LIFECYCLE
+
+1. User enters message → hits NGINX
+2. NGINX forwards to Frontend / Backend
+3. Backend authenticates & processes query
+4. Backend retrieves relevant chunks from AstraDB
+5. Agentic pipeline prepares an optimized LLM prompt
+6. Backend sends LLM prompt → Ngrok → Qwen
+7. Qwen generates LLM response tokens
+8. Response returns → Ngrok → Backend
+9. Backend streams final answer to Streamlit
+10. User sees real-time chat response
+    
 🚀 3. Features of RAG
  
       🧠 Agentic Intelligence
@@ -286,6 +299,7 @@ Tracking using Langsmith:-
 🎉 Author - 
 
 Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
 
 
