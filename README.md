@@ -49,6 +49,9 @@ This README provides an end-to-end guide covering architecture, features, setup,
 
 🏗️ 2. Architecture:-
 
+<img width="598" height="817" alt="image" src="https://github.com/user-attachments/assets/c3c1426f-b44b-4c3f-9080-8bdda92a3a00" />
+
+
                     🌍 Internet Users
                             │
                             │  HTTPS (443)
@@ -328,5 +331,6 @@ Tracking using Langsmith:-
 | **Slowest (P99)**         | **13–14 sec**    | Only 1% of requests are slow     |
 
 🎉 Author - Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
 
