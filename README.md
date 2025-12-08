@@ -128,7 +128,7 @@ FULL REQUEST–RESPONSE LIFECYCLE
         n. OLLAMA_LOCAL_HOST = ********************
 
 📸 Screenshots of Application
-<img width="1907" height="943" alt="Screenshot 2025-12-08 103707" src="https://github.com/user-attachments/assets/f03ac05a-22be-423e-a59f-acda1b7baa4b" />
+<img width="1446" height="524" alt="Screenshot 2025-12-08 103707" src="https://github.com/user-attachments/assets/7dac4b95-6da5-4697-b719-86bbd5cc6372" />
 <img width="1706" height="908" alt="Screenshot 2025-12-08 105105" src="https://github.com/user-attachments/assets/9e5d9553-32a7-47ab-b6e9-79a55ce70ca7" />
 <img width="1791" height="967" alt="Screenshot 2025-12-08 103745" src="https://github.com/user-attachments/assets/e3de967d-29d6-4cca-966c-255a0d20946a" />
 <img width="907" height="426" alt="Screenshot 2025-12-08 103807" src="https://github.com/user-attachments/assets/b66fa669-a106-41b1-8405-469cc0a0f6ef" />
@@ -311,6 +311,7 @@ Tracking using Langsmith:-
 🎉 Author - 
 
 Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
 
 
