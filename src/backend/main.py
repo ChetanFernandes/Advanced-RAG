@@ -5,7 +5,7 @@ from fastapi import FastAPI, Query, UploadFile, File, Form, Request, Header, HTT
 from fastapi.middleware.cors import CORSMiddleware 
 from contextlib import asynccontextmanager
 from src.backend.DB import ConnectToAstraDB
-from backend.agent import web_agent
+from src.backend.agent import web_agent
 from src.backend.Adding_files import Adding_files_DB
 from src.backend.utilis import *
 from src.backend.image_processing_bytes import extract_Image_summaries
@@ -292,7 +292,6 @@ async def query_endpoint(query:str = Form(...), selected_doc:str = Form(None), i
             log.info(f"User has already assigned agent and memory")
             agent = user_data["agent"]
             memory = user_data["memory"]
-
         
         image_summary = ""                          
         if not selected_doc:

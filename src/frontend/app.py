@@ -135,19 +135,13 @@ if submitted:
             "selected_doc": selected_doc
         }
 
-        
         if uploaded_image:
             files = {'image': (uploaded_image.name, uploaded_image.getvalue(),uploaded_image.type)}
         else:
             files = {}
-
-        data = {
-                "query":user_query,
-                "selected_doc" : selected_doc 
-            }
         
         with st.spinner("Processing query..."):
-            response = requests.post(f"{API_URL}/query", data=data, headers=st.session_state["auth_headers"])
+            response = requests.post(f"{API_URL}/query", data=data, files=files, headers=st.session_state["auth_headers"])
             if response.status_code == 200:
                 result = response.json()
                 st.subheader("🧠 Final Answer")

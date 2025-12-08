@@ -30,7 +30,7 @@ def file_processor(file_name,file_bytes,user_id):
 
         elif file_type == "docx":
             log.info("Entering under docx dunction")
-            ddocuments , error_msg = extract_docx_elements(file_name,file_bytes,user_id)
+            documents , error_msg = extract_docx_elements(file_name,file_bytes,user_id)
 
         elif file_type == "pptx":
             log.info("Entering under ppt dunction")

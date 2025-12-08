@@ -141,8 +141,8 @@ FULL REQUEST–RESPONSE LIFECYCLE
            1. Ubuntu 22.04 LTS
 
     PART 2 — CONNECT TO EC2
-           1. chmod 400 "AG.pem"
-           2. ssh -i RAG.pem ubuntu@public_ip
+           1. chmod 400 "new.pem"
+           2. ssh -i new.pem ubuntu@public_ip
 
     PART 3 — INSTALL DOCKER & DOCKER COMPOSE
       a. Step 1: Add Docker’s official GPG key

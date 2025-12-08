@@ -169,7 +169,7 @@ class question_answering:
             log.info(f"🟢 Received user text query: {query}")
             image_summary = []
             if image:
-                    image.seek(0)  
+                    await image.seek(0)  
                     image_bytes = await image.read()   # Reads the entire file as bytes (async)
                     content_type = image.content_type
                     log.info(type(image_bytes))           # <class 'bytes'>
