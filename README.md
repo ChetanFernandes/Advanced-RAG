@@ -1,6 +1,6 @@
 🌟 Project Title:- 
 
-   Advanced Agentic RAG System + ChatGPT-Powered Real-Time Chatbot
+   Advanced Agentic Multimodal RAG System + ChatGPT-Powered Real-Time Chatbot
 
   A complete production-ready Retrieval-Augmented Generation (RAG) and Chat_GPT Model platform built with:
 
@@ -311,6 +311,7 @@ Tracking using Langsmith:-
 🎉 Author - 
 
 Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
 
 
