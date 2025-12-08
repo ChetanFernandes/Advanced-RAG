@@ -133,7 +133,6 @@ FULL REQUEST–RESPONSE LIFECYCLE
 <img width="1791" height="967" alt="Screenshot 2025-12-08 103745" src="https://github.com/user-attachments/assets/e3de967d-29d6-4cca-966c-255a0d20946a" />
 <img width="1791" height="967" alt="Screenshot 2025-12-08 103807" src="https://github.com/user-attachments/assets/857a68ed-6082-4e62-af85-fd8a6c2c607b" />
 <img width="1680" height="907" alt="Screenshot 2025-12-08 110025" src="https://github.com/user-attachments/assets/1a4a21ef-5341-4e6d-b79e-0e5b83f4d572" />
-<img width="752" height="732" alt="Screenshot 2025-12-02 155702" src="https://github.com/user-attachments/assets/35eb51d6-de97-43b4-8213-6206e892e6b5" />
 <img width="1087" height="681" alt="Screenshot 2025-12-02 155608" src="https://github.com/user-attachments/assets/3e6108e5-64ab-4b45-b62d-ebdfe5173afc" />
 <img width="1027" height="837" alt="Screenshot 2025-12-08 105502" src="https://github.com/user-attachments/assets/12bf4f8e-2a22-4719-bfad-ca7a19b4746d" />
 <img width="885" height="828" alt="Screenshot 2025-12-08 105552" src="https://github.com/user-attachments/assets/a014ab04-b295-405a-b8b0-1d9d0ab1985f" />
@@ -311,6 +310,7 @@ Tracking using Langsmith:-
 🎉 Author - 
 
 Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
 
 
