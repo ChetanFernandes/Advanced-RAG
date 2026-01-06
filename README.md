@@ -1,3 +1,5 @@
+ **Note** - This is an independent, self-driven GenAI implementation built for learning and demonstration purposes, using no proprietary or employer data.
+
 🌟 Project Title:- 
 
    Advanced Agentic Multimodal RAG System + ChatGPT-Powered Real-Time Chatbot
@@ -310,6 +312,7 @@ Tracking using Langsmith:-
 🎉 Author - 
 
 Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
 
 
